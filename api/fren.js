@@ -396,6 +396,18 @@ async function coins() {
   return rows.filter(Boolean).sort((a, b) => b.launchedAt - a.launchedAt);
 }
 
+// the browse bar: what's trading on Stonk.fun right now, straight from Stonk's public API
+async function topTokens(sort) {
+  const q = sort === 'volume' || sort === 'newest' ? '?sort=' + sort : '';
+  const d = await stonk('/tokens' + q, 60000);
+  const abs = u => (u && u[0] === '/' ? 'https://www.stonkfun.xyz' + u : u || '');
+  return ((d && d.tokens) || []).slice(0, 24).map(t => ({
+    mint: t.mint, name: t.name, symbol: t.symbol, image: abs(t.imageUrl), status: t.status,
+    quote: t.quote ? { symbol: t.quote.symbol, category: t.quote.categoryLabel } : null,
+    mcap: t.market ? t.market.marketCapUsd : null, vol: t.market ? t.market.volume24hUsd : null, change: t.market ? t.market.priceChange24h : null,
+  }));
+}
+
 /* ---------------- sessions + Sign in with X (OAuth 2.0 PKCE) ---------------- */
 const sessionKey = () => E('FREN_SESSION_SECRET') || crypto.createHmac('sha256', master()).update('fren:session').digest('hex');
 function signTok(obj) { const p = Buffer.from(JSON.stringify(obj)).toString('base64url'); return p + '.' + crypto.createHmac('sha256', sessionKey()).update(p).digest('base64url'); }
@@ -485,6 +497,7 @@ module.exports = async function handler(req, res) {
     if (path === 'pairs' && M === 'GET') return json(res, 200, { pairs: await launchablePairs() }, 60);
     if (path === 'coins' && M === 'GET') return json(res, 200, { coins: await coins() }, 15);
     if (path === 'coin' && M === 'GET') return json(res, 200, await coinDetail(String(req.query.id || '')), 5);
+    if (path === 'top' && M === 'GET') return json(res, 200, { tokens: await topTokens(String(req.query.sort || '')) }, 60);
     if (path === 'ledger' && M === 'GET') return json(res, 200, { payouts: await payoutsFor('pay/', 100) }, 15);
     if (path === 'launch/prepare' && M === 'POST') return json(res, 200, await prepare(await readBody(req)));
     if (path === 'launch/execute' && M === 'POST') return json(res, 200, await execute(String((await readBody(req)).id || '')));
