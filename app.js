@@ -45,6 +45,10 @@ function closeModal() { $('#modal').hidden = true; $('#mcard').innerHTML = ''; }
 const markSvg = (c = '') => `<svg class="mark ${c}"><use href="#mark"/></svg>`;
 const av = (c, lg) => `<span class="av${lg ? ' lg' : ''}">${c && c.image ? `<img src="${esc(c.image)}" alt="" loading="lazy">` : esc(((c && c.symbol) || '?').slice(0, 2))}</span>`;
 const qchip = q => `<span class="pill">${q.logo ? `<img class="qlogo" src="${esc(q.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : ''}${esc(q.symbol)}${q.category ? ` · <span class="dim">${esc(q.category)}</span>` : ''}</span>`;
+const usd = n => n == null ? '—' : n >= 1e9 ? '$' + (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? '$' + (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? '$' + (n / 1e3).toFixed(1) + 'K' : '$' + n.toFixed(2);
+const pct = n => n == null ? '' : `<span class="${n >= 0 ? 'up' : 'dn'}">${n >= 0 ? '+' : ''}${n.toFixed(1)}%</span>`;
+const getTop = (sort = 'mcap') => load('top_' + sort, () => api('top' + (sort === 'mcap' ? '' : '?sort=' + sort)).then(j => j.tokens));
+const tkCard = t => `<a class="tk" href="${stonkUrl(t.mint)}" target="_blank" rel="noopener"><img src="${esc(t.image)}" alt="" loading="lazy" referrerpolicy="no-referrer"><div class="grow"><b>$${esc(t.symbol)}</b><small>${esc(t.name)}${t.quote ? ' · ' + esc(t.quote.symbol) : ''}</small></div><div class="r"><b>${usd(t.mcap)}</b>${pct(t.change)}</div></a>`;
 const empty = (b, s) => `<div class="empty"><b>${b}</b>${s}</div>`;
 
 /* the fren chain, computed the same way the server does it (the server is what pays) */
@@ -151,6 +155,7 @@ V.home = async el => {
     <div class="route">${routeArt()}<a class="chip" href="#/docs"><small>ROUTED BY FREN</small>Fees to an X handle ↗</a></div>
   </section>
   <div class="stats" id="stats">${['Coins launched', 'Payouts on-chain', 'Frens paid', 'Stonk pairs'].map(s => `<div class="card stat"><b>—</b><span>${s}</span></div>`).join('')}</div>
+  <div class="card" style="margin-bottom:12px"><div class="kick">Browse Stonk</div><h3>What's trading on Stonk.fun right now</h3><div class="tabs" style="margin-top:12px" id="h-sort">${[['mcap', 'Top market cap'], ['volume', '24h volume'], ['newest', 'Newest']].map(([k, l], i) => `<button class="tab ${i ? '' : 'on'}" data-act="topsort" data-s="${k}">${l}</button>`).join('')}</div><div class="tgrid" id="h-top"><div class="empty">loading Stonk…</div></div></div>
   <div class="bento">
     <div class="card c7"><div class="kick">Latest coins</div><div class="feed" id="h-coins"><div class="empty">loading…</div></div></div>
     <div class="card c5"><div class="kick">Fee routing</div><h3>One coin. Up to three frens.</h3>
@@ -169,9 +174,16 @@ V.home = async el => {
   $('#stats').innerHTML = ['Coins launched', 'Payouts on-chain', 'Frens paid', 'Stonk pairs'].map((s, i) => `<div class="card stat"><b>${st[i] ? st[i].toLocaleString() : '—'}</b><span>${s}</span></div>`).join('');
   $('#h-coins').innerHTML = coins == null ? empty('Could not load coins.', 'Refresh in a moment.') : coins.length ? coins.slice(0, 5).map(c => `<a class="row" href="#/coin/${esc(c.id)}" style="text-decoration:none">${av(c)}<div class="grow"><b>${esc(c.name)} <span class="muted">$${esc(c.symbol)}</span></b><small>${esc(c.quote.symbol)} pair · frens ${c.handles.map(h => '@' + esc(h)).join(' → ')}</small></div><small>${ago(c.launchedAt)}</small></a>`).join('') : empty('No coins launched yet.', 'The first one lands here the moment it goes live. <a href="#/launch">Launch one →</a>');
   $('#h-pay').innerHTML = pay == null ? empty('Could not load payouts.', 'Refresh in a moment.') : pay.length ? pay.slice(0, 5).map(payRow).join('') : empty('No payouts yet.', 'Every payout is one Solana transaction with a <code>fren|v1|pay</code> memo. Each one lands here with its Solscan link.');
+  paintTop('mcap');
   if (pairs) { const cats = {}; pairs.forEach(p => { cats[p.categoryLabel] = (cats[p.categoryLabel] || 0) + 1; }); $('#h-cats').innerHTML = Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([k, n]) => `<a class="pill sky" href="#/launch" style="text-decoration:none">${esc(k)} <span class="dim">${n}</span></a>`).join(''); }
   else $('#h-cats').innerHTML = '<span class="muted">Stonk.fun did not answer, try again in a moment.</span>';
 };
+async function paintTop(sort) {
+  const box = $('#h-top'); if (!box) return;
+  document.querySelectorAll('#h-sort .tab').forEach(b => b.classList.toggle('on', b.dataset.s === sort));
+  try { const t = await getTop(sort); if ($('#h-top') === box) box.innerHTML = t.length ? t.slice(0, 12).map(tkCard).join('') : empty('Stonk.fun returned no tokens.', 'Try again in a moment.'); }
+  catch (e) { box.innerHTML = empty('Could not reach Stonk.fun.', esc(e.message)); }
+}
 function routeArt() {
   const H = ['Fren 1', 'Fren 2', 'Fren 3'], F = 'font-family="DM Sans,system-ui,sans-serif"';
   return `<svg viewBox="0 0 460 330" aria-hidden="true"><defs><filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="5"/></filter></defs>
@@ -427,7 +439,7 @@ async function route() {
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const a = b.dataset.act;
-  if (['wallet', 'close', 'pick', 'disconnect', 'copy', 'settle', 'finish', 'refund', 'link', 'logout', 'toc'].includes(a) && b.tagName !== 'A') e.preventDefault();
+  if (['wallet', 'close', 'pick', 'disconnect', 'copy', 'settle', 'finish', 'refund', 'link', 'logout', 'toc', 'topsort'].includes(a) && b.tagName !== 'A') e.preventDefault();
   if (a === 'wallet') openModal(walletModal());
   if (a === 'close') closeModal();
   if (a === 'pick') connectWith(providers()[+b.dataset.i]);
@@ -445,6 +457,7 @@ document.addEventListener('click', async e => {
     try { const r = await api('launch/refund', { id: b.dataset.id }); S.bust = Date.now(); toast(`Refunded ${sol(r.lamports)} SOL · <a href="${solscan(r.sig)}" target="_blank" rel="noopener">tx ↗</a>`); LS.set('fren:pending', null); route(); }
     catch (er) { toast(esc(er.message), true); b.disabled = false; }
   }
+  if (a === 'topsort') paintTop(b.dataset.s);
   if (a === 'link') doLink();
   if (a === 'logout') { await api('logout', {}).catch(() => {}); route(); }
 });
