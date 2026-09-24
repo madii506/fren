@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>fren — Launch coins. Pay a fren.</title>
+<meta name="description" content="Launch a coin on Stonk.fun and route its creator fees to an X handle. The first fren to sign in with X gets paid.">
+<meta property="og:title" content="fren — Launch coins. Pay a fren.">
+<meta property="og:description" content="Launch on Stonk. Route the fees to your fren's X.">
+<meta property="og:image" content="/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/og.png">
+<meta name="theme-color" content="#c7f0fd">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<clipPath id="ct"><rect x="140" y="50" width="120" height="115"/></clipPath>
+<clipPath id="cb"><rect x="140" y="235" width="120" height="115"/></clipPath>
+<mask id="ma" maskUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="500"><rect x="-50" y="-50" width="500" height="500" fill="#fff"/><circle cx="240" cy="200" r="88" fill="none" stroke="#000" stroke-width="60" clip-path="url(#cb)"/></mask>
+<mask id="mb" maskUnits="userSpaceOnUse" x="-50" y="-50" width="500" height="500"><rect x="-50" y="-50" width="500" height="500" fill="#fff"/><circle cx="160" cy="200" r="88" fill="none" stroke="#000" stroke-width="60" clip-path="url(#ct)"/></mask>
+<symbol id="mark" viewBox="40 60 320 280"><g transform="rotate(-22 200 200)"><circle cx="160" cy="200" r="88" fill="none" stroke="currentColor" stroke-width="38" mask="url(#ma)"/><circle cx="240" cy="200" r="88" fill="none" stroke="currentColor" stroke-width="38" mask="url(#mb)"/></g></symbol>
+</defs></svg>
+<header class="nav"><div class="wrap">
+  <a class="brand" href="#/"><svg class="mark"><use href="#mark"/></svg>fren</a>
+  <nav class="links" id="links">
+    <a href="#/" data-r="home">Home</a><a href="#/explore" data-r="explore">Explore</a><a href="#/claim" data-r="claim">Claim</a><a href="#/ledger" data-r="ledger">Ledger</a><a href="#/docs" data-r="docs">Docs</a>
+  </nav>
+  <div class="nav-r">
+    <a class="xico" id="xlink" target="_blank" rel="noopener" hidden aria-label="fren on X"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.3L5.3 21H2.2l7.2-8.3L2 3h6.4l4.4 5.8L17.8 3Zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5Z"/></svg></a>
+    <a class="btn sky" href="#/launch">+ Launch coin</a>
+    <button class="btn" id="wbtn" data-act="wallet">Connect</button>
+  </div>
+</div></header>
+<main class="wrap" id="app"><div class="load">loading…</div></main>
+<footer><div class="wrap">
+  <span>Live fren data · Launches run on Stonk.fun · Payouts are verified on Solana.</span>
+  <span><a href="#/docs">Docs</a> · <a href="https://github.com/madii506/fren" target="_blank" rel="noopener">Code</a> · <a href="https://www.stonkfun.xyz" target="_blank" rel="noopener">Stonk.fun</a></span>
+</div></footer>
+<div class="modal" id="modal" hidden><div class="mcard" id="mcard"></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.0/lib/index.iife.min.js" defer></script>
+<script src="/app.js" defer></script>
+</body>
+</html>
